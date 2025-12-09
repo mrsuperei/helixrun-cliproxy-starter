@@ -1,0 +1,49 @@
+=== REQUEST INFO ===
+Version: dev
+URL: /v1/chat/completions
+Method: POST
+Timestamp: 2025-12-09T00:14:22.8512414+01:00
+
+=== HEADERS ===
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Authorization: Bearer heli...-key
+Content-Type: application/json
+X-Forwarded-For: ::1
+User-Agent: Apidog/1.0.0 (https://apidog.com)
+Content-Length: 140
+
+=== REQUEST BODY ===
+{
+        "model": "gemini-2.5-flash",
+        "messages": [
+          {"role": "user", "content": "Hello Gemini!"}
+        ]
+      }
+
+
+=== RESPONSE ===
+Status: 400
+Access-Control-Allow-Headers: *
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+
+{
+  "error": {
+    "code": 400,
+    "message": "Invalid JSON payload received. Unknown name \"messages\": Cannot find field.",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "description": "Invalid JSON payload received. Unknown name \"messages\": Cannot find field."
+          }
+        ]
+      }
+    ]
+  }
+}
+

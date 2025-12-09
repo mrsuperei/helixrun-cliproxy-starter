@@ -1,0 +1,52 @@
+=== REQUEST INFO ===
+Version: dev
+URL: /v1beta/models/gemini-2.5-pro:generateContent
+Method: POST
+Timestamp: 2025-12-09T00:36:41.8463213+01:00
+
+=== HEADERS ===
+Content-Length: 163
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Authorization: Bearer heli...-key
+Content-Type: application/json
+X-Forwarded-For: ::1
+User-Agent: Apidog/1.0.0 (https://apidog.com)
+
+=== REQUEST BODY ===
+{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          { "text": "Leg kort uit wat Helixrun doet." }
+        ]
+      }
+    ]
+  }
+
+=== RESPONSE ===
+Status: 400
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: *
+
+{
+  "error": {
+    "code": 400,
+    "message": "Invalid JSON payload received. Unknown name \"contents\": Cannot find field.",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "description": "Invalid JSON payload received. Unknown name \"contents\": Cannot find field."
+          }
+        ]
+      }
+    ]
+  }
+}
+

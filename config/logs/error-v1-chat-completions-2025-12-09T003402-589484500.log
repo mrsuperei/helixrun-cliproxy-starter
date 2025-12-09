@@ -1,0 +1,52 @@
+=== REQUEST INFO ===
+Version: dev
+URL: /v1/chat/completions
+Method: POST
+Timestamp: 2025-12-09T00:34:02.5894845+01:00
+
+=== HEADERS ===
+Content-Length: 156
+Accept: */*
+Accept-Encoding: gzip, deflate, br
+Authorization: Bearer heli...-key
+Content-Type: application/json
+X-Forwarded-For: ::1
+User-Agent: Apidog/1.0.0 (https://apidog.com)
+
+=== REQUEST BODY ===
+{
+    "model": "gemini-2.5-pro",
+    "messages": [
+      {"role": "user", "content": "Leg kort uit wat Helixrun doet."}
+    ],
+    "stream": false
+  }
+
+=== RESPONSE ===
+Status: 400
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: *
+Content-Type: application/json
+Access-Control-Allow-Origin: *
+
+{
+  "error": {
+    "code": 400,
+    "message": "Invalid JSON payload received. Unknown name \"messages\": Cannot find field.\nInvalid JSON payload received. Unknown name \"stream\": Cannot find field.",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "description": "Invalid JSON payload received. Unknown name \"messages\": Cannot find field."
+          },
+          {
+            "description": "Invalid JSON payload received. Unknown name \"stream\": Cannot find field."
+          }
+        ]
+      }
+    ]
+  }
+}
+

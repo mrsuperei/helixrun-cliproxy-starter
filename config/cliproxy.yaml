@@ -1,0 +1,45 @@
+port: 8317
+# Remote management configuration so EasyCLI or the WebUI / Management Center
+# can connect to this instance over the network.
+remote-management:
+# For a server deployment exposed via HelixRun, this must be true.
+  allow-remote: true
+# Secret key used by remote management clients (EasyCLI, WebUI, etc.).
+# Change this before exposing the service to the internet.
+  secret-key: "$2a$10$mjepu0cj.apS2VDBvZ0P2OUpQ6VqltZ2rle7SAn7pKCtl05P5BPC."
+# Keep this false to use the built-in /management.html WebUI.
+  disable-control-panel: false
+# Directory where CLIProxyAPI stores OAuth auth files (Gemini, Codex, Claude, Qwen, etc.).
+# The path can be relative to the working directory.
+auth-dir: "C:/Users/jappa/projecten/helixrun-cliproxy-starter/auths"
+# Logging & debug
+debug: false
+logging-to-file: true
+usage-statistics-enabled: true
+request-retry: 3
+# Simple access key that client tools (like HelixRun itself or external CLIs)
+# must send in the Authorization header when using this proxy:
+#   Authorization: Bearer helixrun-dev-key
+api-keys:
+  - "helixrun-dev-key"
+proxy-url: ""
+request-log: false
+tls:
+  enable: false
+  cert: ""
+  key: ""
+disable-cooling: false
+max-retry-interval: 0
+quota-exceeded:
+  switch-project: false
+  switch-preview-model: false
+ws-auth: false
+ampcode:
+  upstream-url: ""
+  upstream-api-key: ""
+  restrict-management-to-localhost: true
+  model-mappings: []
+  force-model-mappings: false
+payload:
+  default: []
+  override: []
