@@ -1,0 +1,20 @@
+# Build outputs
+/server.exe
+/bin/
+
+# Local configuration and secrets
+/.env
+/auths/*.json
+/auths/*.yaml
+/auths/*.yml
+
+# Runtime artifacts
+/config/logs/
+/config/*.db
+
+# IDE and tooling
+.DS_Store
+Thumbs.db
+*.code-workspace
+.vscode/
+.idea/

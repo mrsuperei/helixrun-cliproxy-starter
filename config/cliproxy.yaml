@@ -1,6 +1,8 @@
 port: 8317
 # Remote management configuration so EasyCLI or the WebUI / Management Center
 # can connect to this instance over the network.
+use-canonical-translator: true # Enable new IR translation architecture
+show-provider-prefixes: true # Optional: show provider prefixes in model list
 remote-management:
 # For a server deployment exposed via HelixRun, this must be true.
   allow-remote: true
@@ -10,8 +12,8 @@ remote-management:
 # Keep this false to use the built-in /management.html WebUI.
   disable-control-panel: false
 # Directory where CLIProxyAPI stores OAuth auth files (Gemini, Codex, Claude, Qwen, etc.).
-# The path can be relative to the working directory.
-auth-dir: "C:/Users/jappa/projecten/helixrun-cliproxy-starter/auths"
+# Keep this relative so the project is portable across machines.
+auth-dir: "./auths"
 # Logging & debug
 debug: false
 logging-to-file: true
@@ -23,7 +25,7 @@ request-retry: 3
 api-keys:
   - "helixrun-dev-key"
 proxy-url: ""
-request-log: false
+request-log: true
 tls:
   enable: false
   cert: ""
@@ -43,3 +45,7 @@ ampcode:
 payload:
   default: []
   override: []
+host: ""
+disable-auth: false
+kiro: []
+incognito-browser: false

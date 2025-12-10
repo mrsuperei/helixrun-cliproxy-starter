@@ -12,10 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	cliproxy "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy"
+	cliproxysdk "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy"
 
-	"helixrun-cliproxy-starter/internal/cliproxyembed"
-	"helixrun-cliproxy-starter/internal/httpserver"
+	"helixrun-cliproxy-starter/internal/cliproxy"
+	cliproxyhttp "helixrun-cliproxy-starter/internal/cliproxy"
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 		log.Printf("warning: failed loading .env file: %v", err)
 	}
 
-	cfg, err := cliproxy.LoadConfig(configPath)
+	cfg, err := cliproxysdk.LoadConfig(configPath)
 	if err != nil {
 		log.Fatalf("failed to load cliproxy config: %v", err)
 	}
@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// Start embedded CLIProxyAPI service
-	cpSvc, err := cliproxyembed.Start(ctx, configPath)
+	cpSvc, err := cliproxy.Start(ctx, configPath)
 	if err != nil {
 		log.Fatalf("failed to start embedded CLIProxyAPI: %v", err)
 	}
@@ -73,7 +73,7 @@ func main() {
 		log.Fatalf("invalid cliproxy base URL: %v", err)
 	}
 
-	httpSrv := httpserver.New(":8080", cliproxyBase, managementKey)
+	httpSrv := cliproxyhttp.New(":8080", cliproxyBase, managementKey)
 
 	go func() {
 		log.Printf("HelixRun public server listening on %s (proxying to %s)", httpSrv.Addr(), cliproxyBase.String())

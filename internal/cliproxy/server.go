@@ -1,4 +1,4 @@
-package httpserver
+package cliproxy
 
 import (
 	"context"
@@ -18,19 +18,13 @@ type Server struct {
 
 // New constructs a new Server instance listening on addr, proxying all
 // /cliproxy/* requests to the given cliproxyBase URL.
-//
-// Example:
-//
-//	addr := ":8080"
-//	base, _ := url.Parse("http://127.0.0.1:8317")
-//	s := httpserver.New(addr, base)
 func New(addr string, cliproxyBase *url.URL, managementKey string) *Server {
 	mux := http.NewServeMux()
 
 	// Simple health endpoint for uptime checks.
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok")) // best-effort
+		_, _ = w.Write([]byte("ok"))
 	})
 
 	// Reverse proxy: /cliproxy/* -> CLIProxyAPI (strip prefix).
@@ -46,7 +40,6 @@ func New(addr string, cliproxyBase *url.URL, managementKey string) *Server {
 				}
 			}
 			if strings.HasPrefix(path, "/v0/management") || strings.HasPrefix(path, "/management") {
-				// Inject X-Management-Key so callers do not need to provide it manually.
 				r.Header.Set("X-Management-Key", managementKey)
 			}
 		}
@@ -74,7 +67,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.srv.Shutdown(ctx)
 }
 
-// Addr returns the listen address of the underlying http.Server.
+// Addr returns the listening address.
 func (s *Server) Addr() string {
 	return s.srv.Addr
 }

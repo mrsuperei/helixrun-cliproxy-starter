@@ -1,4 +1,4 @@
-package cliproxyembed
+package cliproxy
 
 import (
 	"context"
@@ -7,40 +7,36 @@ import (
 	"os"
 	"path/filepath"
 
-	cliproxy "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy"
+	cliproxysdk "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy"
 
-	// Register all built-in request/response translators (OpenAI ↔ Gemini, etc.).
-
+	// Register all built-in request/response translators (OpenAI, Gemini, etc.).
 	_ "github.com/router-for-me/CLIProxyAPI/v6/sdk/translator/builtin"
 )
 
 // Service wraps the embedded CLIProxyAPI service instance.
 type Service struct {
-	svc *cliproxy.Service
+	svc *cliproxysdk.Service
 }
 
 // Start creates and runs an embedded CLIProxyAPI Service using the given
 // configuration file path. The service runs in a background goroutine and
 // stops when the provided context is cancelled.
 func Start(ctx context.Context, configPath string) (*Service, error) {
-	// Altijd een absoluut pad gebruiken; de SDK verwacht dit.
 	absPath, err := filepath.Abs(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("resolve config path: %w", err)
 	}
 
-	// Optioneel, maar handig: check of het bestand bestaat en leesbaar is.
 	if _, err := os.Stat(absPath); err != nil {
 		return nil, fmt.Errorf("config file %q not found or unreadable: %w", absPath, err)
 	}
 
-	cfg, err := cliproxy.LoadConfig(absPath)
+	cfg, err := cliproxysdk.LoadConfig(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("load cliproxy config: %w", err)
 	}
 
-	// Bouw de embedded CLIProxy service met dezelfde YAML-configuratie als de CLI.
-	builder := cliproxy.NewBuilder().
+	builder := cliproxysdk.NewBuilder().
 		WithConfig(cfg).
 		WithConfigPath(absPath)
 	svc, err := builder.Build()
@@ -48,7 +44,6 @@ func Start(ctx context.Context, configPath string) (*Service, error) {
 		return nil, fmt.Errorf("build cliproxy service: %w", err)
 	}
 
-	// Service in de background draaien; Run blokkeert normaal.
 	go func() {
 		if err := svc.Run(ctx); err != nil && ctx.Err() == nil {
 			log.Printf("cliproxy service stopped with error: %v", err)

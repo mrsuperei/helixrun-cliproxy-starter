@@ -2,7 +2,7 @@ module helixrun-cliproxy-starter
 
 go 1.24.0
 
-require github.com/router-for-me/CLIProxyAPI/v6 v6.0.0-20251208155402-7afdb2594582
+require github.com/router-for-me/CLIProxyAPI/v6 v6.5.61
 
 require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
@@ -30,8 +30,9 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
+	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
+	github.com/tailscale/hujson v0.0.0-20250605163823-992244df8c5a // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
@@ -44,10 +45,11 @@ require (
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/term v0.36.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/router-for-me/CLIProxyAPI/v6 => github.com/mrsuperei/CLIProxyAPI/v6 v6.0.0-20251208155402-7afdb2594582
+replace github.com/router-for-me/CLIProxyAPI/v6 => github.com/mrsuperei/CLIProxyAPI-Extended/v6 v6.0.0-20251210132605-657b7b8664cc
