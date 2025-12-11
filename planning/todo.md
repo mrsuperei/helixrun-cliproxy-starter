@@ -3,6 +3,7 @@
 ## Backlog
 
 - [ ] [ID:HR-002] [area:cliproxy] Uitbreiden van cliproxy HTTP-routes en handlers voor toekomstige HelixRun-features
+- [ ] [ID:HR-005] [area:store] Documenteren en verfijnen van PGSTORE_* gebruik (dsn/schema/local path) voor verschillende omgevingen (dev/stage/prod)
 
 ## In Progress
 

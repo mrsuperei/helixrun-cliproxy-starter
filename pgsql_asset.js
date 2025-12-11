@@ -1,0 +1,2 @@
+import{_ as t,c as o,o as r,af as a}from"./chunks/framework.W5ZyBR1w.js";const p=JSON.parse('{"title":"PostgreSQL-backed Configuration and Token Store","description":"","frontmatter":{},"headers":[],"relativePath":"configuration/storage/pgsql.md","filePath":"en/configuration/storage/pgsql.md"}'),n={name:"configuration/storage/pgsql.md"};function s(d,e,i,c,l,g){return r(),o("div",null,[...e[0]||(e[0]=[a("",6)])])}const f=t(n,[["render",s]]);export{p as __pageData,f as default};
+

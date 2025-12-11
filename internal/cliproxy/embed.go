@@ -8,27 +8,26 @@ import (
 	"path/filepath"
 	"strings"
 
+	sdkAuth "github.com/router-for-me/CLIProxyAPI/v6/sdk/auth"
 	cliproxysdk "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy"
-	coreauth "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy/auth"
 
 	// Register all built-in request/response translators (OpenAI, Gemini, etc.).
 	_ "github.com/router-for-me/CLIProxyAPI/v6/sdk/translator/builtin"
+
+	authstore "helixrun-cliproxy-starter/internal/store"
 )
 
 // StartOptions describes how the embedded CLIProxy service should be launched.
 type StartOptions struct {
 	// ConfigPath points to the CLIProxy configuration file.
 	ConfigPath string
-	// CoreManager allows callers to inject a custom auth manager (for DB-backed stores).
-	CoreManager *coreauth.Manager
 	// LocalManagementPassword enforces a password only accepted from localhost callers.
 	LocalManagementPassword string
 }
 
 // Service wraps the embedded CLIProxyAPI service instance.
 type Service struct {
-	svc     *cliproxysdk.Service
-	manager *coreauth.Manager
+	svc *cliproxysdk.Service
 }
 
 // Start creates and runs an embedded CLIProxyAPI Service using the provided options.
@@ -52,12 +51,35 @@ func Start(ctx context.Context, opts StartOptions) (*Service, error) {
 		return nil, fmt.Errorf("load cliproxy config: %w", err)
 	}
 
+	// Optional: configure official Postgres-backed auth/token store when PGSTORE_DSN is set.
+	if dsn := firstNonEmptyEnv("PGSTORE_DSN", "pgstore_dsn"); dsn != "" {
+		schema := firstNonEmptyEnv("PGSTORE_SCHEMA", "pgstore_schema")
+		spoolDir := firstNonEmptyEnv("PGSTORE_LOCAL_PATH", "pgstore_local_path")
+
+		store, err := authstore.NewPostgresTokenStore(ctx, authstore.PostgresTokenConfig{
+			DSN:      dsn,
+			Schema:   schema,
+			SpoolDir: spoolDir,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("init postgres token store: %w", err)
+		}
+
+		if err := store.EnsureSchema(ctx); err != nil {
+			return nil, fmt.Errorf("ensure postgres token schema: %w", err)
+		}
+		if err := store.SyncFromDatabase(ctx); err != nil {
+			return nil, fmt.Errorf("sync auth from postgres: %w", err)
+		}
+
+		// Make CLIProxy watch the mirrored auth directory and use Postgres as token store.
+		cfg.AuthDir = store.AuthDir()
+		sdkAuth.RegisterTokenStore(store)
+	}
+
 	builder := cliproxysdk.NewBuilder().
 		WithConfig(cfg).
 		WithConfigPath(absPath)
-	if opts.CoreManager != nil {
-		builder = builder.WithCoreAuthManager(opts.CoreManager)
-	}
 	if opts.LocalManagementPassword != "" {
 		builder = builder.WithLocalManagementPassword(opts.LocalManagementPassword)
 	}
@@ -72,7 +94,7 @@ func Start(ctx context.Context, opts StartOptions) (*Service, error) {
 		}
 	}()
 
-	return &Service{svc: svc, manager: opts.CoreManager}, nil
+	return &Service{svc: svc}, nil
 }
 
 // Shutdown gracefully stops the embedded CLIProxyAPI service.
@@ -83,10 +105,11 @@ func (s *Service) Shutdown(ctx context.Context) error {
 	return s.svc.Shutdown(ctx)
 }
 
-// Manager returns the shared core auth manager, if one was provided.
-func (s *Service) Manager() *coreauth.Manager {
-	if s == nil {
-		return nil
+func firstNonEmptyEnv(keys ...string) string {
+	for _, key := range keys {
+		if val := strings.TrimSpace(os.Getenv(key)); val != "" {
+			return val
+		}
 	}
-	return s.manager
+	return ""
 }

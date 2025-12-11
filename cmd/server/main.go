@@ -12,14 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	sdkAuth "github.com/router-for-me/CLIProxyAPI/v6/sdk/auth"
 	cliproxysdk "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy"
-	coreauth "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy/auth"
 
 	"helixrun-cliproxy-starter/internal/cliproxy"
-	handlercreds "helixrun-cliproxy-starter/internal/cliproxy/handler/credentials"
 	"helixrun-cliproxy-starter/internal/cliproxy/router"
-	authstore "helixrun-cliproxy-starter/internal/store"
 )
 
 func main() {
@@ -61,22 +57,9 @@ func main() {
 		}
 	}
 
-	credentialStore, err := authstore.FromEnv(ctx, cfg.AuthDir)
-	if err != nil {
-		log.Fatalf("failed to initialise credential store: %v", err)
-	}
-	defer func() {
-		if err := credentialStore.Close(); err != nil {
-			log.Printf("error closing credential store: %v", err)
-		}
-	}()
-	sdkAuth.RegisterTokenStore(credentialStore)
-	coreManager := coreauth.NewManager(credentialStore, nil, nil)
-
 	// Start embedded CLIProxyAPI service
 	cpSvc, err := cliproxy.Start(ctx, cliproxy.StartOptions{
 		ConfigPath:              configPath,
-		CoreManager:             coreManager,
 		LocalManagementPassword: localManagementKey,
 	})
 	if err != nil {
@@ -96,8 +79,7 @@ func main() {
 		log.Fatalf("invalid cliproxy base URL: %v", err)
 	}
 
-	credHandler := handlercreds.New(credentialStore, coreManager, localManagementKey)
-	httpSrv := router.New(":8080", cliproxyBase, localManagementKey, credHandler)
+	httpSrv := router.New(":8080", cliproxyBase, localManagementKey)
 
 	go func() {
 		log.Printf("HelixRun public server listening on %s (proxying to %s)", httpSrv.Addr(), cliproxyBase.String())

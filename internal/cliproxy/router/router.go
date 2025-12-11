@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	handlercreds "helixrun-cliproxy-starter/internal/cliproxy/handler/credentials"
 )
 
 // Server proxies /cliproxy requests and exposes HelixRun admin endpoints.
@@ -18,7 +16,7 @@ type Server struct {
 }
 
 // New constructs a server using the provided dependencies.
-func New(addr string, cliproxyBase *url.URL, managementKey string, credHandler *handlercreds.Handler) *Server {
+func New(addr string, cliproxyBase *url.URL, managementKey string) *Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -26,11 +24,7 @@ func New(addr string, cliproxyBase *url.URL, managementKey string, credHandler *
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	if credHandler != nil {
-		credHandler.Register(mux)
-	}
-
-	// Serve small static admin UI (credentials.html and related assets).
+	// Serve static admin UI assets (management.html, etc.).
 	mux.Handle("/admin/", http.StripPrefix("/admin/", http.FileServer(http.Dir("./config/static"))))
 
 	proxy := httputil.NewSingleHostReverseProxy(cliproxyBase)
