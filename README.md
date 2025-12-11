@@ -28,12 +28,66 @@ Remote management (EasyCLI or the Web UI / Management Center) connects to
 from `config/cliproxy.yaml`.
 
 > **Management key injection**  
-> Put a plaintext `MANAGEMENT_PASSWORD=...` entry in `.env` (auto-loaded on
-> startup) or export it in your shell before running `go run ./cmd/server`.
-> The HTTP proxy uses this value to forward management requests and the
-> embedded CLIProxyAPI runtime also treats it as the remote management password.
-> If you omit it, the proxy falls back to the hashed key from the YAML file,
-> which the management API will reject.
+> Set `LOCAL_MANAGEMENT_PASSWORD=...` (preferred) or the legacy
+> `MANAGEMENT_PASSWORD=...` entry in `.env`. The HTTP proxy now injects this
+> plaintext value into every `/v0/management` request so the hashed secret from
+> `config/cliproxy.yaml` never traverses the proxy. If both variables are empty
+> the proxy falls back to the hashed secret, but the CLIProxy management API will
+> reject that value.
+
+## Credential database
+
+HelixRun now persists provider credentials in PostgreSQL (while still mirroring
+JSON to `auths/` so CLIProxy's watcher continues to work). Apply the schema from
+`database/schema.sql` once per database:
+
+```bash
+psql "$HELIXRUN_DB_DSN" -f database/schema.sql
+```
+
+Environment variables:
+
+- `HELIXRUN_DB_DSN` – PostgreSQL connection string. Defaults to
+  `postgres://helixrun:helixrun@localhost:5432/helixrun?sslmode=disable`.
+- `HELIXRUN_DB_SCHEMA` is not required; the schema file always creates/uses the
+  `provider_credentials` table in the connected database.
+
+The repository implements the CLIProxy SDK token store and mirrors auth files to
+`auths/`, so CLIProxy hot-reload behaviour remains unchanged.
+
+### Credential API
+
+The HelixRun HTTP server exposes a small admin API for managing credentials
+without touching the filesystem. All endpoints require the local management
+password via the `Authorization: Bearer ...` or `X-Management-Key` header. A
+full reference is available in `endpoints.md`.
+
+| Method | Path                    | Description                                  |
+|--------|------------------------|----------------------------------------------|
+| GET    | `/api/credentials`     | List all stored provider credentials         |
+| POST   | `/api/credentials`     | Create/import a credential (JSON payload)    |
+| GET    | `/api/credentials/{id}`| Fetch a single credential                    |
+| DELETE | `/api/credentials/{id}`| Remove a credential and disable it in runtime|
+
+Example create payload:
+
+```json
+{
+  "provider": "gemini",
+  "label": "dev api key",
+  "attributes": {
+    "api_key": "sk-..."
+  },
+  "metadata": {
+    "type": "gemini",
+    "project_id": "gemini-dev"
+  }
+}
+```
+
+The server automatically supplies an `id` when omitted (`{provider}-{uuid}.json`)
+and ensures the `metadata.type` matches the provider so CLIProxy can route the
+credential correctly.
 
 ## Layout
 
@@ -42,12 +96,19 @@ from `config/cliproxy.yaml`.
   - embedded CLIProxyAPI service using `config/cliproxy.yaml`
   - HelixRun HTTP server on `:8080` that proxies `/cliproxy/*` to `127.0.0.1:8317`.
 
-- `internal/cliproxyembed`  
-  Helper to construct and run `cliproxy.Service` via `cliproxy.NewBuilder()`.
+- `internal/cliproxy`  
+  Helpers around the embedded `cliproxy.Service` lifecycle.
 
-- `internal/httpserver`  
-  Thin wrapper around `net/http` with a reverse proxy based on
-  `httputil.NewSingleHostReverseProxy`.
+- `internal/repo/credentials`  
+  PostgreSQL-backed credential repository that also implements the CLIProxy token
+  store interface.
+
+- `internal/handler/credentials`  
+  HTTP handlers for `/api/credentials` CRUD endpoints.
+
+- `internal/router`  
+  Shared HTTP server wiring that exposes health, credential API and the
+  `/cliproxy/*` reverse proxy.
 
 - `config/cliproxy.yaml`  
   Minimal configuration with:
@@ -97,3 +158,20 @@ http://localhost:8080/cliproxy/management.html
 ```
 
 This is proxied to the embedded CLIProxyAPI instance.
+
+4. Simple credential UI
+
+HelixRun also exposes a minimal HTML/JS UI for managing provider credentials and starting OAuth/device
+flows for supported providers:
+
+```text
+http://localhost:8080/admin/credentials.html
+```
+
+This page:
+
+- Talks to the HelixRun credential API at `/api/credentials` using the local management password you
+  enter in the UI.
+- Delegates provider logins to the embedded CLIProxyAPI management endpoints via `/cliproxy/v0/management`,
+  so successful OAuth/device flows create auth files that are automatically mirrored into the
+  `provider_credentials` table and show up in the credential list.

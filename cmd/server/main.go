@@ -12,10 +12,14 @@ import (
 	"syscall"
 	"time"
 
+	sdkAuth "github.com/router-for-me/CLIProxyAPI/v6/sdk/auth"
 	cliproxysdk "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy"
+	coreauth "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy/auth"
 
 	"helixrun-cliproxy-starter/internal/cliproxy"
-	cliproxyhttp "helixrun-cliproxy-starter/internal/cliproxy"
+	handlercreds "helixrun-cliproxy-starter/internal/cliproxy/handler/credentials"
+	"helixrun-cliproxy-starter/internal/cliproxy/router"
+	authstore "helixrun-cliproxy-starter/internal/store"
 )
 
 func main() {
@@ -43,19 +47,38 @@ func main() {
 		log.Fatalf("failed to load cliproxy config: %v", err)
 	}
 
-	managementKey := strings.TrimSpace(os.Getenv("MANAGEMENT_PASSWORD"))
-	if managementKey == "" {
-		managementKey = cfg.RemoteManagement.SecretKey
-		if managementKey != "" && strings.HasPrefix(managementKey, "$2") {
-			log.Println("warning: MANAGEMENT_PASSWORD not set; proxy will inject hashed management secret which remote API will reject")
+	localManagementKey := strings.TrimSpace(os.Getenv("LOCAL_MANAGEMENT_PASSWORD"))
+	if localManagementKey == "" {
+		localManagementKey = strings.TrimSpace(os.Getenv("MANAGEMENT_PASSWORD"))
+	}
+	if localManagementKey == "" {
+		localManagementKey = cfg.RemoteManagement.SecretKey
+		if localManagementKey != "" && strings.HasPrefix(localManagementKey, "$2") {
+			log.Println("warning: LOCAL_MANAGEMENT_PASSWORD not set; using hashed remote secret for local traffic")
 		}
-		if managementKey == "" {
+		if localManagementKey == "" {
 			log.Println("warning: no management key configured; management endpoints require manual headers")
 		}
 	}
 
+	credentialStore, err := authstore.FromEnv(ctx, cfg.AuthDir)
+	if err != nil {
+		log.Fatalf("failed to initialise credential store: %v", err)
+	}
+	defer func() {
+		if err := credentialStore.Close(); err != nil {
+			log.Printf("error closing credential store: %v", err)
+		}
+	}()
+	sdkAuth.RegisterTokenStore(credentialStore)
+	coreManager := coreauth.NewManager(credentialStore, nil, nil)
+
 	// Start embedded CLIProxyAPI service
-	cpSvc, err := cliproxy.Start(ctx, configPath)
+	cpSvc, err := cliproxy.Start(ctx, cliproxy.StartOptions{
+		ConfigPath:              configPath,
+		CoreManager:             coreManager,
+		LocalManagementPassword: localManagementKey,
+	})
 	if err != nil {
 		log.Fatalf("failed to start embedded CLIProxyAPI: %v", err)
 	}
@@ -73,7 +96,8 @@ func main() {
 		log.Fatalf("invalid cliproxy base URL: %v", err)
 	}
 
-	httpSrv := cliproxyhttp.New(":8080", cliproxyBase, managementKey)
+	credHandler := handlercreds.New(credentialStore, coreManager, localManagementKey)
+	httpSrv := router.New(":8080", cliproxyBase, localManagementKey, credHandler)
 
 	go func() {
 		log.Printf("HelixRun public server listening on %s (proxying to %s)", httpSrv.Addr(), cliproxyBase.String())

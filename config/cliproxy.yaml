@@ -15,7 +15,7 @@ remote-management:
 # Keep this relative so the project is portable across machines.
 auth-dir: "./auths"
 # Logging & debug
-debug: false
+debug: true
 logging-to-file: true
 usage-statistics-enabled: true
 request-retry: 3

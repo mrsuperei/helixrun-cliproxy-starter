@@ -1,4 +1,4 @@
-package cliproxy
+package router
 
 import (
 	"context"
@@ -8,36 +8,37 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	handlercreds "helixrun-cliproxy-starter/internal/cliproxy/handler/credentials"
 )
 
-// Server wraps the public HelixRun HTTP server that proxies requests
-// to the local CLIProxyAPI instance.
+// Server proxies /cliproxy requests and exposes HelixRun admin endpoints.
 type Server struct {
 	srv *http.Server
 }
 
-// New constructs a new Server instance listening on addr, proxying all
-// /cliproxy/* requests to the given cliproxyBase URL.
-func New(addr string, cliproxyBase *url.URL, managementKey string) *Server {
+// New constructs a server using the provided dependencies.
+func New(addr string, cliproxyBase *url.URL, managementKey string, credHandler *handlercreds.Handler) *Server {
 	mux := http.NewServeMux()
 
-	// Simple health endpoint for uptime checks.
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	// Reverse proxy: /cliproxy/* -> CLIProxyAPI (strip prefix).
-	proxy := httputil.NewSingleHostReverseProxy(cliproxyBase)
+	if credHandler != nil {
+		credHandler.Register(mux)
+	}
 
+	// Serve small static admin UI (credentials.html and related assets).
+	mux.Handle("/admin/", http.StripPrefix("/admin/", http.FileServer(http.Dir("./config/static"))))
+
+	proxy := httputil.NewSingleHostReverseProxy(cliproxyBase)
 	mux.Handle("/cliproxy/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if managementKey != "" {
-			path := r.URL.Path
-			if strings.HasPrefix(path, "/cliproxy") {
-				path = strings.TrimPrefix(path, "/cliproxy")
-				if path == "" {
-					path = "/"
-				}
+			path := strings.TrimPrefix(r.URL.Path, "/cliproxy")
+			if path == "" {
+				path = "/"
 			}
 			if strings.HasPrefix(path, "/v0/management") || strings.HasPrefix(path, "/management") {
 				r.Header.Set("X-Management-Key", managementKey)
@@ -57,17 +58,17 @@ func New(addr string, cliproxyBase *url.URL, managementKey string) *Server {
 	return &Server{srv: srv}
 }
 
-// Start starts the HTTP server and blocks until it stops.
+// Start begins serving HTTP traffic.
 func (s *Server) Start() error {
 	return s.srv.ListenAndServe()
 }
 
-// Shutdown gracefully shuts down the HTTP server.
+// Shutdown attempts a graceful stop.
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.srv.Shutdown(ctx)
 }
 
-// Addr returns the listening address.
+// Addr returns listening address.
 func (s *Server) Addr() string {
 	return s.srv.Addr
 }

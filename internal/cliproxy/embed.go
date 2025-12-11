@@ -6,22 +6,38 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	cliproxysdk "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy"
+	coreauth "github.com/router-for-me/CLIProxyAPI/v6/sdk/cliproxy/auth"
 
 	// Register all built-in request/response translators (OpenAI, Gemini, etc.).
 	_ "github.com/router-for-me/CLIProxyAPI/v6/sdk/translator/builtin"
 )
 
-// Service wraps the embedded CLIProxyAPI service instance.
-type Service struct {
-	svc *cliproxysdk.Service
+// StartOptions describes how the embedded CLIProxy service should be launched.
+type StartOptions struct {
+	// ConfigPath points to the CLIProxy configuration file.
+	ConfigPath string
+	// CoreManager allows callers to inject a custom auth manager (for DB-backed stores).
+	CoreManager *coreauth.Manager
+	// LocalManagementPassword enforces a password only accepted from localhost callers.
+	LocalManagementPassword string
 }
 
-// Start creates and runs an embedded CLIProxyAPI Service using the given
-// configuration file path. The service runs in a background goroutine and
-// stops when the provided context is cancelled.
-func Start(ctx context.Context, configPath string) (*Service, error) {
+// Service wraps the embedded CLIProxyAPI service instance.
+type Service struct {
+	svc     *cliproxysdk.Service
+	manager *coreauth.Manager
+}
+
+// Start creates and runs an embedded CLIProxyAPI Service using the provided options.
+// The service runs in a background goroutine and stops when the supplied context is cancelled.
+func Start(ctx context.Context, opts StartOptions) (*Service, error) {
+	configPath := strings.TrimSpace(opts.ConfigPath)
+	if configPath == "" {
+		return nil, fmt.Errorf("config path is required")
+	}
 	absPath, err := filepath.Abs(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("resolve config path: %w", err)
@@ -39,6 +55,12 @@ func Start(ctx context.Context, configPath string) (*Service, error) {
 	builder := cliproxysdk.NewBuilder().
 		WithConfig(cfg).
 		WithConfigPath(absPath)
+	if opts.CoreManager != nil {
+		builder = builder.WithCoreAuthManager(opts.CoreManager)
+	}
+	if opts.LocalManagementPassword != "" {
+		builder = builder.WithLocalManagementPassword(opts.LocalManagementPassword)
+	}
 	svc, err := builder.Build()
 	if err != nil {
 		return nil, fmt.Errorf("build cliproxy service: %w", err)
@@ -50,7 +72,7 @@ func Start(ctx context.Context, configPath string) (*Service, error) {
 		}
 	}()
 
-	return &Service{svc: svc}, nil
+	return &Service{svc: svc, manager: opts.CoreManager}, nil
 }
 
 // Shutdown gracefully stops the embedded CLIProxyAPI service.
@@ -59,4 +81,12 @@ func (s *Service) Shutdown(ctx context.Context) error {
 		return nil
 	}
 	return s.svc.Shutdown(ctx)
+}
+
+// Manager returns the shared core auth manager, if one was provided.
+func (s *Service) Manager() *coreauth.Manager {
+	if s == nil {
+		return nil
+	}
+	return s.manager
 }
