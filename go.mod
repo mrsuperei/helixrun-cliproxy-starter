@@ -3,7 +3,6 @@ module helixrun-cliproxy-starter
 go 1.24.0
 
 require (
-	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/router-for-me/CLIProxyAPI/v6 v6.5.61
 )
@@ -25,6 +24,7 @@ require (
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -62,4 +62,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/router-for-me/CLIProxyAPI/v6 => github.com/mrsuperei/CLIProxyAPI-Extended/v6 v6.0.0-20251210132605-657b7b8664cc
+replace github.com/router-for-me/CLIProxyAPI/v6 => github.com/mrsuperei/CLIProxyAPI-Extended/v6 v6.0.0-20251211190430-88a70939e1c7

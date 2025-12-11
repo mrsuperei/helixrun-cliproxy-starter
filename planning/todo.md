@@ -4,6 +4,7 @@
 
 - [ ] [ID:HR-002] [area:cliproxy] Uitbreiden van cliproxy HTTP-routes en handlers voor toekomstige HelixRun-features
 - [ ] [ID:HR-005] [area:store] Documenteren en verfijnen van PGSTORE_* gebruik (dsn/schema/local path) voor verschillende omgevingen (dev/stage/prod)
+- [ ] [ID:HR-006] [area:cliproxy] Bijwerken van CLIProxyAPI-Extended forkversie in go.mod naar de laatste commit en go.mod/go.sum opschonen
 
 ## In Progress
 

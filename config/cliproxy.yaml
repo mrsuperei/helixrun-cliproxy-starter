@@ -13,10 +13,10 @@ remote-management:
   disable-control-panel: false
 # Directory where CLIProxyAPI stores OAuth auth files (Gemini, Codex, Claude, Qwen, etc.).
 # Keep this relative so the project is portable across machines.
-auth-dir: "./auths"
+auth-dir: "C:\\Users\\jappa\\projecten\\helixrun-cliproxy-starter\\auths"
 # Logging & debug
 debug: true
-logging-to-file: true
+logging-to-file: false
 usage-statistics-enabled: true
 request-retry: 3
 # Simple access key that client tools (like HelixRun itself or external CLIs)
